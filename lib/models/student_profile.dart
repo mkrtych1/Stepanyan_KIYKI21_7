@@ -1,4 +1,7 @@
-import 'package:flutter/material.dart';
+import 'faculty.dart';
+
+enum GenderType { male, female }
+
 class StudentProfile {
   final String firstName;
   final String lastName;
@@ -14,13 +17,3 @@ class StudentProfile {
     required this.gender,
   });
 }
-
-enum Faculty { economics, law, technology, healthSciences }
-enum GenderType { male, female }
-
-const Map<Faculty, IconData> facultyIcons = {
-  Faculty.economics: Icons.monetization_on,
-  Faculty.law: Icons.account_balance,
-  Faculty.technology: Icons.computer,
-  Faculty.healthSciences: Icons.local_hospital,
-};
