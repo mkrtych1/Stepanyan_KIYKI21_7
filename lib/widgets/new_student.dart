@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
+import '../models/faculty.dart';
 import 'package:stepanyan_kiuki_21_7/models/student_profile.dart';
 
 class NewStudent extends StatefulWidget {
   final StudentProfile? student;
   final Function(StudentProfile) onSave;
 
-  const NewStudent({Key? key, this.student, required this.onSave}) : super(key: key);
+  const NewStudent({super.key, this.student, required this.onSave});
 
   @override
   _NewStudentState createState() => _NewStudentState();
