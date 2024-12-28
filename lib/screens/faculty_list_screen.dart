@@ -14,8 +14,12 @@ class FacultyListScreen extends ConsumerWidget {
 
     final facultyCounts = {
       for (var faculty in Faculty.values)
-        faculty: students.where((s) => s.faculty == faculty).length,
+        faculty: students.studentList.where((s) => s.faculty == faculty).length,
     };
+
+    if (students.loading) {
+      return const Center(child: CircularProgressIndicator());
+    }
 
     return GridView.builder(
       padding: const EdgeInsets.all(16),

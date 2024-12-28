@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../models/student_profile.dart';
 import '../providers/students_provider.dart';
 import '../widgets/current_student.dart';
 import '../widgets/student_list_item.dart';
@@ -9,21 +8,12 @@ class StudentListScreen extends ConsumerWidget {
   const StudentListScreen({super.key});
 
   void _showAddOrEditModal(BuildContext context, WidgetRef ref,
-      {StudentProfile? student, int? index}) {
+      {int? index}) {
     showModalBottomSheet(
       isScrollControlled: true,
       context: context,
       builder: (_) {
-        return CurrentStudent(
-          student: student,
-          onSave: (newStudent) {
-            if (index != null) {
-              ref.read(provider.notifier).updateEntry(index, newStudent);
-            } else {
-              ref.read(provider.notifier).addEntry(newStudent);
-            }
-          },
-        );
+        return CurrentStudent(studentIndex: index);
       },
     );
   }
@@ -31,6 +21,27 @@ class StudentListScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final students = ref.watch(provider);
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (students.msg != null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              students.msg!,
+              style: const TextStyle(color: Colors.white),
+            ),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    });
+
+
+    if (students.loading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    
 
     return Scaffold(
       appBar: AppBar(
@@ -46,7 +57,7 @@ class StudentListScreen extends ConsumerWidget {
           ),
         ),
       ),
-      body: students.isEmpty
+      body: students.studentList.isEmpty
           ? const Center(
               child: Text(
                 'No students yet!',
@@ -59,13 +70,13 @@ class StudentListScreen extends ConsumerWidget {
             )
           : ListView.builder(
               padding: const EdgeInsets.all(16),
-              itemCount: students.length,
+              itemCount: students.studentList.length,
               itemBuilder: (context, index) {
-                final student = students[index];
+                final student = students.studentList[index];
                 return StudentListItem(
                   profile: student,
                   onEdit: () =>
-                      _showAddOrEditModal(context, ref, student: student, index: index),
+                      _showAddOrEditModal(context, ref, index: index),
                   onDelete: () {
                     ref.read(provider.notifier).removeEntry(index);
                     final toUndo = ProviderScope.containerOf(context);
@@ -79,7 +90,12 @@ class StudentListScreen extends ConsumerWidget {
                           },
                         ),
                       ),
-                    );
+                    ).closed.then((value) {
+                        if (value != SnackBarClosedReason.action) {
+                          ref.read(provider.notifier).removeEntryDb();
+                        }
+                      });
+
                   },
                 );
               },

@@ -18,7 +18,7 @@ class StudentListItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final Color cardColor =
-        profile.gender == GenderType.male ? Colors.blueAccent.shade100 : Colors.pinkAccent.shade100;
+        profile.gender == Gender.male ? Colors.blueAccent.shade100 : Colors.pinkAccent.shade100;
 
     return Container(
       margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
@@ -94,14 +94,14 @@ class StudentListItem extends StatelessWidget {
               color: Colors.white,
               borderRadius: BorderRadius.circular(8),
               border: Border.all(
-                color: profile.gender == GenderType.male ? Colors.blue : Colors.pink,
+                color: profile.gender == Gender.male ? Colors.blue : Colors.pink,
                 width: 2,
               ),
             ),
             child: Icon(
               facultyIcons[profile.faculty],
               size: 30,
-              color: profile.gender == GenderType.male ? Colors.blue : Colors.pink,
+              color: profile.gender == Gender.male ? Colors.blue : Colors.pink,
             ),
           ),
         ],

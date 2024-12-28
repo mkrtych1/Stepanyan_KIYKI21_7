@@ -3,38 +3,71 @@ import 'package:stepanyan_kiuki_21_7/models/student_profile.dart';
 import '../models/faculty.dart';
 import '../models/faculty_icons.dart';
 import '../models/faculty_names.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../providers/students_provider.dart';
 
-class CurrentStudent extends StatefulWidget {
-  final StudentProfile? student;
-  final Function(StudentProfile) onSave;
+class CurrentStudent extends ConsumerStatefulWidget {
+  const CurrentStudent({
+    super.key,
+    this.studentIndex
+  });
 
-  const CurrentStudent({super.key, this.student, required this.onSave});
+  final int? studentIndex;
 
   @override
-  _CurrentStudentState createState() => _CurrentStudentState();
+  ConsumerState<ConsumerStatefulWidget> createState() => _CurrentStudentState();
 }
 
-class _CurrentStudentState extends State<CurrentStudent> {
+class _CurrentStudentState extends ConsumerState<CurrentStudent> {
   final _firstNameController = TextEditingController();
   final _lastNameController = TextEditingController();
-  Faculty? _selectedFaculty;
-  GenderType? _selectedGender;
+  Faculty _selectedFaculty = Faculty.law;
+  Gender _selectedGender = Gender.male;
   int _grade = 1;
 
   @override
   void initState() {
     super.initState();
-    if (widget.student != null) {
-      _firstNameController.text = widget.student!.firstName;
-      _lastNameController.text = widget.student!.lastName;
-      _selectedFaculty = widget.student!.faculty;
-      _selectedGender = widget.student!.gender;
-      _grade = widget.student!.grade;
+    if (widget.studentIndex != null) {
+      final student = ref.read(provider).studentList[widget.studentIndex!];
+      _firstNameController.text = student.firstName;
+      _lastNameController.text = student.lastName;
+      _selectedGender = student.gender;
+      _selectedFaculty = student.faculty;
+      _grade = student.grade;
     }
   }
 
+  void submit() async {
+      if (widget.studentIndex == null)  {
+      await ref.read(provider.notifier).addEntry(
+            _firstNameController.text.trim(),
+            _lastNameController.text.trim(),
+            _selectedFaculty,
+            _selectedGender,
+            _grade,
+          );
+    } else {
+      await ref.read(provider.notifier).editEntry(
+            widget.studentIndex!,
+            _firstNameController.text.trim(),
+            _lastNameController.text.trim(),
+            _selectedFaculty,
+            _selectedGender,
+            _grade,
+          );
+    }
+
+    if (!context.mounted) return;
+    Navigator.of(context).pop();  
+}
+
   @override
   Widget build(BuildContext context) {
+    final students = ref.watch(provider);
+    if (students.loading) {
+      return const Center(child: CircularProgressIndicator());
+    }
     return Padding(
       padding: EdgeInsets.only(
         bottom: MediaQuery.of(context).viewInsets.bottom,
@@ -101,12 +134,12 @@ class _CurrentStudentState extends State<CurrentStudent> {
                     .toList(),
                 onChanged: (value) {
                   setState(() {
-                    _selectedFaculty = value;
+                    _selectedFaculty = value!;
                   });
                 },
               ),
               const SizedBox(height: 12),
-              DropdownButtonFormField<GenderType>(
+              DropdownButtonFormField<Gender>(
                 value: _selectedGender,
                 decoration: InputDecoration(
                   labelText: 'Gender',
@@ -114,13 +147,13 @@ class _CurrentStudentState extends State<CurrentStudent> {
                     borderRadius: BorderRadius.circular(12),
                   ),
                 ),
-                items: GenderType.values
+                items: Gender.values
                     .map((gender) => DropdownMenuItem(
                           value: gender,
                           child: Row(
                             children: [
                               Icon(
-                                gender == GenderType.male ? Icons.male : Icons.female,
+                                gender == Gender.male ? Icons.male : Icons.female,
                                 color: Colors.teal,
                               ),
                               const SizedBox(width: 10),
@@ -131,7 +164,7 @@ class _CurrentStudentState extends State<CurrentStudent> {
                     .toList(),
                 onChanged: (value) {
                   setState(() {
-                    _selectedGender = value;
+                    _selectedGender = value!;
                   });
                 },
               ),
@@ -185,19 +218,7 @@ class _CurrentStudentState extends State<CurrentStudent> {
                     ),
                   ),
                   ElevatedButton(
-                    onPressed: () {
-                      if (_selectedFaculty == null || _selectedGender == null) return;
-
-                      final newStudent = StudentProfile(
-                        firstName: _firstNameController.text,
-                        lastName: _lastNameController.text,
-                        faculty: _selectedFaculty!,
-                        grade: _grade,
-                        gender: _selectedGender!,
-                      );
-                      widget.onSave(newStudent);
-                      Navigator.pop(context);
-                    },
+                    onPressed: submit,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.teal,
                       shape: RoundedRectangleBorder(
